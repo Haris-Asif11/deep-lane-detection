@@ -11,8 +11,9 @@ from network.unet import get_network_prediction
 from utils.metrics import calculate_confusion_matrix, calculate_metrics
 from utils.tensor_board_helper import TB
 from utils.experiment import save_model_config
-from utils.visualization import get_overlay_image, display_output
 from data.image_dataset import convert_tensor_to_numpy
+import os
+from skimage.io import imsave
 
 
 
@@ -171,87 +172,96 @@ class Model:
             self.tensor_board.add_img(images, predicted_labels,
                                       lane_probability)
 
-    def predict(self, images, video_writer=None):
-        # This is to run our model once its trained to predict unseen data, for example
-        # Similar to valid_step() but labels here.
-        # Note: Since true labels is not available for predict, the evaluation metrics such as
-        # loss, F1 score and accuracy can be calculated here. Instead we can evaluate visually
-        # by generating an overlay image.
+
+    def predict(self, images, video_writer=None, output_dir=None, show=True, idx_offset=0):
+        """
+        Predict on a batch of images. Optionally displays results (IDE-friendly)
+        and saves outputs to `output_dir`.
+
+        Args:
+            images (Tensor): input batch (B, C, H, W)
+            video_writer: (unused here; kept for compatibility)
+            output_dir (str|None): if provided, saves per-sample images
+            show (bool): if True, opens a matplotlib window to display results
+            idx_offset (int): base index for naming saved files
+        """
+
         self.net.eval()
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
 
         with torch.no_grad():
-            # Batch operation: depending on batch size more than one
-            # image can be processed.
-            ## Step 6d : Prediction Step
-            # Move images to self.device
+            # Move to device and forward
             images = images.to(self.device)
-
-
-            # Forward pass
             net_out = self.net(images)
 
-
-
-            # Get network predictions
+            # Predictions
             predicted_labels, lane_probability = get_network_prediction(net_out)
 
+            # For each item in the batch
+            for i in range(images.size(0)):
+                # Create RGB lane-probability tensor (prob into red channel)
+                image_t = images[i].detach().clone()
+                rgb_lane_prob = torch.zeros_like(image_t)
+                rgb_lane_prob[0] = lane_probability[i]  # red channel
 
+                # Overlay image
+                overlay_t = get_overlay_image(image_t.clone(), predicted_labels[i])
 
+                # Convert to numpy for viz/saving (expected H x W x 3 uint8)
+                image_np = convert_tensor_to_numpy(image_t)
+                rgb_lane_prob_np = convert_tensor_to_numpy(rgb_lane_prob)
+                overlay_np = convert_tensor_to_numpy(overlay_t)
 
+                # Optional: side-by-side composite for easier viewing
+                # Make sure shapes match; if not, pad/crop as needed (usually they match).
+                try:
+                    composite = np.concatenate([image_np, rgb_lane_prob_np, overlay_np], axis=1)
+                except ValueError:
+                    # Fallback: resize lane prob/overlay to input width
+                    h, w, _ = image_np.shape
 
-            # For each datasample, generate the overlay image using network predictions.
-            # Next convert the image, overlay_img and RGB_lane_probability
-            # into numpy array using the function that
-            # you have implemented in ImageDataset.py
-            # Note: For lane probability, we need a RGB image. Create a 3D zero
-            # tensor named as 'RGB_lane_probability' with same shape as input
-            # image. Place lane_probability in the red channel (channel=0) of
-            # the tensor.
-            #print("images size", images.size)
-            for i in range(images.size(0)):  #(outputs.size(0))?
-                
-                # Create a 3D tensor with lane probablities in the red channel.
-                # RGB_lane_probability = ...
-                image = images[i]
-                #plt.imshow(convert_tensor_to_numpy(image))
-                
-                RGB_lane_probability = torch.zeros(image.shape)
-                RGB_lane_probability[0] = lane_probability[i]
-                
-                ##RGB_lane_probability = torch.transpose(RGB_lane_probability, 1, 2)
-                
-                #plt.imshow(convert_tensor_to_numpy(image))
+                    def _safe_resize(x):
+                        from skimage.transform import resize
+                        x2 = resize(x, (h, w), preserve_range=True, anti_aliasing=True).astype(np.uint8)
+                        return x2
 
+                    composite = np.concatenate([image_np,
+                                                _safe_resize(rgb_lane_prob_np),
+                                                _safe_resize(overlay_np)], axis=1)
 
+                # Show in an IDE-friendly window (blocking by default the first time)
+                if show:
+                    plt.figure("Prediction Results", figsize=(12, 4))
+                    plt.imshow(composite)
+                    plt.axis('off')
+                    plt.tight_layout()
+                    # Non-blocking show lets your loop continue but still pops a window.
+                    # Close it manually or press 'x' depending on your IDE.
+                    plt.show(block=False)
+                    plt.pause(2)  # give GUI time to render
 
-                # Get overlay image (as RGB image)
-                # overlay_img = ...
-                overlay_img = get_overlay_image(image.clone(), predicted_labels[i])
-                #plt.imshow(convert_tensor_to_numpy(image))
+                # Save results
+                if output_dir:
+                    base = f"pred_{idx_offset + i:06d}"
+                    in_path = os.path.join(output_dir, f"{base}_input.png")
+                    prob_path = os.path.join(output_dir, f"{base}_laneprob.png")
+                    ovl_path = os.path.join(output_dir, f"{base}_overlay.png")
+                    cmp_path = os.path.join(output_dir, f"{base}_composite.png")
 
-
-
-
-                # Convert all 3 tensors to numpy arrays: input, RGB_lane_probability and overlay image
-                image = convert_tensor_to_numpy(image)
-                
-                RGB_lane_probability = convert_tensor_to_numpy(RGB_lane_probability)
-                overlay_img = convert_tensor_to_numpy(overlay_img)
-                
-                
-
-
-
-                if video_writer:
-                    # Generate video frame by concatenate input and
-                    # overlay image horizontally.
-                    video_writer.write_frame(image, overlay_img)
-                else:
-                    # Visualize results using display output function
-                    display_output(image, RGB_lane_probability, overlay_img)
-
-
-
+                    # Avoid skimage low-contrast warnings cluttering the console
+                    try:
+                        imsave(in_path, image_np)
+                        imsave(prob_path, rgb_lane_prob_np)
+                        imsave(ovl_path, overlay_np)
+                        imsave(cmp_path, composite)
+                    except Exception as e:
+                        # If imsave fails (e.g., codec), fallback to matplotlib
+                        import matplotlib.pyplot as _plt
+                        _plt.imsave(in_path, image_np)
+                        _plt.imsave(prob_path, rgb_lane_prob_np)
+                        _plt.imsave(ovl_path, overlay_np)
+                        _plt.imsave(cmp_path, composite)
 
 
     def print_stats(self, mode):

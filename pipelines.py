@@ -1,7 +1,6 @@
 """
 Simulation pipeline and some helper functions.
 
-@author: Sebastian Lotter <sebastian.g.lotter@fau.de>
 """
 import numpy as np
 import os

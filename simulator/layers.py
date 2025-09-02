@@ -2,7 +2,6 @@
 This module provides implementations of some basis layer types
 that together may form a simulated image.
 
-@author: Sebastian Lotter <sebastian.g.lotter@fau.de>
 """
 from functools import partial
 import numpy as np

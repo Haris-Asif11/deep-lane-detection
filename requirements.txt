@@ -1,0 +1,18 @@
+  OS:
+  -Linux (Ubuntu)
+  
+  packages:
+  - python=3.12
+  - pytorch
+  - pytorch-cuda=12.4 (for GPU)
+  - torchvision
+  - matplotlib
+  - numpy
+  - pillow
+  - scikit-image
+  - tensorboard
+  - ffmpeg
+  - scikit-video
+  - h5py
+  - ipython
+

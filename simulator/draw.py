@@ -1,7 +1,7 @@
 """
 Some utility functions for the image simulator.
 
-@author: Sebastian Lotter <sebastian.g.lotter@fau.de>
+
 """
 import numpy as np
 from skimage.draw import polygon

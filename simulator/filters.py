@@ -3,7 +3,7 @@ This module contains filters that can be used to randomize the configuration
 of single layers. For example, using the TiltRoadFilter, the tilt of the road
 (and the lanes) of a StraightRoadLayer can be varied randomly.
 
-@author: Sebastian Lotter <sebastian.g.lotter@fau.de>
+
 """
 import random
 import numpy as np

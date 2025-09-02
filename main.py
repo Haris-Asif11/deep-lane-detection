@@ -10,7 +10,7 @@ from utils.augmentation import VerticalFlip, Rotate, ColRec, GaussianBlur, Gauss
 
 # Creating an experiment for training.
 #exp = Experiment(name='Adam_w500', new=True, overwrite=True)
-exp = Experiment(name='Adam_a0.0001_LW180_epochs50_NoLaneDataset_AugCustom5', new=True, overwrite=True)
+exp = Experiment(name='Adam_a0.0001_LW180_epochs30_AugCustom8', new=True, overwrite=True)
 cfg_path=exp.params['cfg_path']
 
 augmentation_list = Compose([
@@ -26,12 +26,8 @@ augmentation_list = Compose([
 
 
 train_dataset = ConcatDataset([
-        ImageDataset(dataset_name='SimSet6',size=40,cfg_path=cfg_path,augmentation=augmentation_list),
+        ImageDataset(dataset_name='SimSet1',size=250,cfg_path=cfg_path,augmentation=augmentation_list),
         #ImageDataset(dataset_name='SimSet2',size=250,cfg_path=cfg_path,augmentation=augmentation_list),
-        #ImageDataset(dataset_name='SimSet3',size=250,cfg_path=cfg_path,augmentation=augmentation_list),
-        #ImageDataset(dataset_name='SimSet4',size=250,cfg_path=cfg_path,augmentation=augmentation_list),
-        #ImageDataset(dataset_name='Real_No_Lane_Train',size=250,  cfg_path=cfg_path),
-
     ])
 
 
