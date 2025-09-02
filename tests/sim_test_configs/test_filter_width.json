@@ -1,0 +1,129 @@
+{
+    "simulator": {
+        "height": 256,
+        "width" : 256,
+        "layers": [
+            {
+                "id": "Back0",
+                "config_id": "0"
+
+            },
+            {
+                "id": "Sky0",
+                "config_id": "1",
+                "prob" : 1
+
+            },
+            {
+                "id": "Road0",
+                "config_id": "2",
+                "prob" : 1,
+                "serialize": 1,
+                "filters": [
+                    {
+                        "key"   : "LaneWidthFilter",
+                        "params" : {
+                            "lb" : -0.012,
+                            "ub" :  0.012
+                        }
+                    }
+                ]
+
+            }
+
+        ],
+        "layer_configs": {
+            "0": {
+                "layer_key"  : "BackgroundLayer",
+                "layer_params": {
+                    "color_fct": {
+                        "key": "constant",
+                        "params": {
+                            "color"    : [0,120,80]
+                        }
+                    }
+                }
+            },
+            "1" : {
+                "layer_key": "SkyLayer",
+                "layer_params": {
+                    "color_fct": {
+                        "key": "image",
+                        "params": {
+                            "folder": "data/sky_img",
+                            "rotate": 1
+                        }
+                    },
+                    "shape": [[0.0,0.1], [0.0,0.85], [0.3,0.50], [0.0,0.1]]
+                }
+            },
+            "2" : {
+                "layer_key": "StraightRoadLayer",
+                "layer_params": {
+                    "road_left_cord": [
+                        [1.0,0.3],
+                        [0.0,0.3]
+                    ],
+                    "road_width": 0.4,
+                    "lane_left_cords": [
+                        [[1.0,0.3], [0.0,0.3]],
+                        [[1.0,0.48], [0.0,0.48]],
+                        [[1.0,0.51], [0.0,0.51]],
+                        [[1.0,0.69], [0.0,0.69]]
+                    ],
+                    "lane_widths": [
+                        0.015, 0.015, 0.015, 0.015
+                    ],
+                    "transform_coordinates": {
+                        "src": [
+                            [0.0, 0.3], [0.0, 0.7], [1.0, 0.7], [1.0, 0.3]
+                        ],
+                        "tgt": [
+                            [0.3, 0.45], [0.3, 0.55], [1.0, 1.0], [1.0, 0.0]
+                        ]
+                    },
+                    "color_fcts": [
+                        {
+                            "key": "noisy",
+                            "params": {
+                                "mean": [80,80,80],
+                                "deviation"   : 10
+                            }
+                        },
+                        {
+                            "key": "constant",
+                            "params": {
+                                "color": [250,250,0]
+
+                            }
+                        },
+                        {
+                            "key": "constant",
+                            "params": {
+                                "color": [250,250,250]
+
+                            }
+                        },
+                        {
+                            "key": "constant",
+                            "params": {
+                                "color": [250,250,250]
+
+                            }
+                        },
+                        {
+                            "key": "constant",
+                            "params": {
+                                "color": [250,250,0]
+
+                            }
+                        }
+                    ]
+
+                }
+            }
+
+
+        }
+    }
+}

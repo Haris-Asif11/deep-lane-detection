@@ -1,0 +1,26 @@
+{
+    "simulator": {
+        "height": 256,
+        "width": 256,
+        "layers": [
+            {
+                "id": "Back0",
+                "config_id": "0"
+            }
+        ],
+        "layer_configs": {
+            "0": {
+                "layer_key": "BackgroundLayer",
+                "layer_params": {
+                    "color_fct": {
+                        "key": "noisy",
+                        "params": {
+                            "mean"    : [0, 180, 180],
+                            "deviation"   : 20
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
